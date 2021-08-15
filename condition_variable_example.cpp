@@ -1,19 +1,16 @@
 /*
 This code demonstrates the use of C++ condition_variable for the purpose of event handling in multithreaded environment.
 ues case: FBI wants to rescue a child captured by the terrorists. FBI sends one agent to save the child and four soldiers to destroy the terrorist location.
-Explanation:
-soldiers cover the area and waits for the signal from the agent. once the child is saved, agent gives turns the signal on. upon seeing the signal, soldiers starts attacking.
+soldiers cover the area and waits for the signal from the agent. once the child is saved, agent turns the signal on. upon seeing the signal, soldiers starts attacking.
 */
 
 
-#include"headers.h"
-using namespace std;
-#include<memory>
+#include<iostream>
 #include<thread>
 #include <mutex>
 #include<condition_variable>
 #include<functional>
-std::list<int> li;
+#include<vector>
 
 struct Signal{
 
@@ -22,7 +19,7 @@ struct Signal{
 	std::condition_variable m_cv;
 	bool get_Signal_Status(){return m_SignlStatus; }
 	void blow(){
-		cout<<"signal is ON"<<endl;
+		std::cout<<"signal is ON"<<std::endl;
 		m_SignlStatus= true;
 	}
 
@@ -33,20 +30,20 @@ class Soldier
 public:
 	void attack()
 	{
-		cout<<"soldier is attacking"<<endl;
+		std::cout<<"soldier is attacking"<<std::endl;
 	}
 
 };
 class FBI
 {
-	vector<Soldier> m_soldiers{};
+	std::vector<Soldier> m_soldiers{};
 	Signal m_sig;
 	void soldiers_wait_for_signal()
 	{
-		cout<<"soldiers waiting for signal"<<endl;
+		std::cout<<"soldiers waiting for signal"<<std::endl;
 		std::unique_lock<std::mutex> ul(m_sig.m_mtx);
-		m_sig.m_cv.wait(ul,bind(&Signal::get_Signal_Status,&m_sig));
-		cout<<"got signal"<<endl;
+		m_sig.m_cv.wait(ul,std::bind(&Signal::get_Signal_Status,&m_sig));
+		std::cout<<"got signal"<<std::endl;
 	}
 	void attack()
 	{
@@ -62,10 +59,10 @@ public:
 	}
 	void save_child()
 	{
-		cout<<"saving child operation started"<<endl;
-		this_thread::sleep_for(std::chrono::seconds(10));
-		cout<<"saved child"<<endl;
-		cout<<"turning the signal ON"<<endl;
+		std::cout<<"saving child operation started"<<std::endl;
+		std::this_thread::sleep_for(std::chrono::seconds(10));
+		std::cout<<"saved child"<<std::endl;
+		std::cout<<"turning the signal ON"<<std::endl;
 		std::lock_guard<std::mutex> lg(m_sig.m_mtx);
 		m_sig.blow();
 		m_sig.m_cv.notify_all();
@@ -73,13 +70,12 @@ public:
 	}
 	void get_soldiers_ready()
 	{
-		cout<<"getting soldiers ready"<<endl;
+		std::cout<<"getting soldiers ready"<<std::endl;
 		soldiers_wait_for_signal();
 		attack();
 	}
 
 };
-
 
 int main()
 {
