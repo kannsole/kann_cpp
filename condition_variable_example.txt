@@ -1,0 +1,94 @@
+/*
+This code demonstrates the use of C++ condition_variable for the purpose of event handling in multithreaded environment.
+ues case: FBI wants to rescue a child captured by the terrorists. FBI sends one agent to save the child and four soldiers to destroy the terrorist location.
+Explanation:
+soldiers cover the area and waits for the signal from the agent. once the child is saved, agent gives turns the signal on. upon seeing the signal, soldiers starts attacking.
+*/
+
+
+#include"headers.h"
+using namespace std;
+#include<memory>
+#include<thread>
+#include <mutex>
+#include<condition_variable>
+#include<functional>
+std::list<int> li;
+
+struct Signal{
+
+	bool m_SignlStatus{false};
+	std::mutex m_mtx;
+	std::condition_variable m_cv;
+	bool get_Signal_Status(){return m_SignlStatus; }
+	void blow(){
+		cout<<"signal is ON"<<endl;
+		m_SignlStatus= true;
+	}
+
+};
+
+class Soldier
+{
+public:
+	void attack()
+	{
+		cout<<"soldier is attacking"<<endl;
+	}
+
+};
+class FBI
+{
+	vector<Soldier> m_soldiers{};
+	Signal m_sig;
+	void soldiers_wait_for_signal()
+	{
+		cout<<"soldiers waiting for signal"<<endl;
+		std::unique_lock<std::mutex> ul(m_sig.m_mtx);
+		m_sig.m_cv.wait(ul,bind(&Signal::get_Signal_Status,&m_sig));
+		cout<<"got signal"<<endl;
+	}
+	void attack()
+	{
+		for(Soldier& slr : m_soldiers)
+		{
+			slr.attack();
+		}
+	}
+public:
+	void add_soldiers(int num){
+		for(int i=0; i<num; ++i)
+		m_soldiers.push_back(Soldier());
+	}
+	void save_child()
+	{
+		cout<<"saving child operation started"<<endl;
+		this_thread::sleep_for(std::chrono::seconds(10));
+		cout<<"saved child"<<endl;
+		cout<<"turning the signal ON"<<endl;
+		std::lock_guard<std::mutex> lg(m_sig.m_mtx);
+		m_sig.blow();
+		m_sig.m_cv.notify_all();
+
+	}
+	void get_soldiers_ready()
+	{
+		cout<<"getting soldiers ready"<<endl;
+		soldiers_wait_for_signal();
+		attack();
+	}
+
+};
+
+
+int main()
+{
+	FBI obj;
+	obj.add_soldiers(4);
+	std::thread th1(&FBI::get_soldiers_ready,&obj);
+	std::thread th2(&FBI::save_child,&obj);
+
+	th1.join();
+	th2.join();
+	return 0;
+}
